@@ -1,2 +1,155 @@
-# RepData_PeerAssessment2
-Reproducible Research assignment 2
+# Severe weather affect to public health and economic study
+Natapone C  
+
+## Synopsis
+We analyse storms and weather events from U.S. National Oceanic and Atmospheric Administration's (NOAA) to answer how its affect US public health and economic. The data come in CSV format which is required cleaning up for event name and damage cost. To address public health problem, we calculate damage from the number of fatalities and injuries. Economic cost is calculated from property and crop damage in billion dollar. After summarize damage by event type, we found that tornado causes the most are most harmful to population health. Flood affects the most to economic consequences.
+
+## Questions
+Your data analysis must address the following questions:
+
+1) Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+2) Across the United States, which types of events have the greatest economic consequences?
+
+## Data Processing
+How the data were loaded into R and processed for analysis.
+
+### Read storm data from csv file
+
+```r
+read_raw <- function () {
+    file_path = "data/repdata-data-StormData.csv";
+    data = read.csv(file_path,sep = ",")   
+}
+
+data = read_raw();
+```
+
+### cleanup data
+- All lower case
+- Cleanup special sign and stemming
+- Convert unit to original value
+
+```r
+cleanup <- function(data) {
+    # lowercase EVTYPE
+    ev = tolower(data$EVTYPE)
+    
+    # remove special sign (non word)
+    ev = gsub("\\W", " ", ev, perl = TRUE)
+    
+    # single space, use "sub" for single, "gsub" for global
+    ev = gsub("\\s+", " ", ev, perl = TRUE)
+    
+    # trim
+    ev = sub("^\\s+", "", ev, perl = TRUE)
+    ev = sub("\\s+$", "", ev, perl = TRUE)
+    
+    # plural
+    ev = sub("s$", "", ev, perl = TRUE)
+    
+    data$EVTYPE = ev
+    
+    # lowercase damage exp
+    data$PROPDMGEXP = cleanup_exp(data$PROPDMGEXP)
+    data$CROPDMGEXP = cleanup_exp(data$CROPDMGEXP)
+    
+    # calculate property damage PROPDMG * 10 ^ PROPDMGEXP
+    data$PROPDMG = data$PROPDMG * 10^(data$PROPDMGEXP)
+    
+    # calculate crop damage CROPDMG * 10 ^ CROPDMGEXP
+    data$CROPDMG = data$CROPDMG * 10^(data$CROPDMGEXP)
+    
+    return(data)
+}
+
+cleanup_exp <- function(ex) {
+    
+    ex = gsub("K|k", 3, ex, perl = TRUE)
+    ex = gsub("M|m", 6, ex, perl = TRUE)
+    ex = gsub("B|b", 9, ex, perl = TRUE)
+    ex = gsub("\\D", 0, ex, perl = TRUE)
+    
+    ex = as.numeric(ex)
+    ex[is.na(ex)] = 0 # set NA to 0
+    
+    ex
+}
+
+data = cleanup(data)
+```
+
+### Definition of data
+*Question1:* Population health damage by event is calculated from 
+
+```r
+population_damage = as.formula("FATALITIES + INJURIES ~ EVTYPE")
+```
+
+*Question2:* Economic damage by event is calculated from 
+
+```r
+economic_damage = as.formula("PROPDMG + CROPDMG ~ EVTYPE")
+```
+
+## Results
+We use aggregate function to summarize relationship between events and its damage.
+### Calculate population health damage by event
+
+```r
+filter_result <- function(agg, limit=10) {
+    idx = agg[2] > 0
+    agg = agg[idx,]
+    agg = agg[order(-agg[[2]]), ]
+    
+    total_damage = sum(agg[[2]])
+    agg['damage'] = agg[2] / total_damage * 100
+    
+    head(agg, limit)
+}
+
+agg_population = aggregate(population_damage, data = data, FUN = sum)
+agg_population = filter_result(agg_population)
+```
+
+### Calculate economic damage by event
+
+```r
+agg_economic = aggregate(economic_damage, data = data, FUN = sum)
+agg_economic = filter_result(agg_economic)
+```
+
+### Plot top 10 of harmful events to population health
+We can see clearly that tornado causes almost 100,000 fatalities and injuries a lot more than other events.
+
+```r
+library(ggplot2)
+ggplot(data=agg_population, 
+    aes(x=EVTYPE, y=agg_population[[2]], fill=EVTYPE)) +
+    geom_bar(colour="black", stat="identity") +
+    guides(fill=FALSE) +
+    xlab("Event type") +
+    ylab("Number of fatalities and injuries")
+```
+
+![](README_files/figure-html/unnamed-chunk-7-1.png) 
+
+### Plot top 10 of harmful events to economic
+However, flood damages property and crop around 150 bilion dollar, twice of hurricane, tornado and storm surge.
+
+```r
+ggplot(data=agg_economic, 
+    aes(x=EVTYPE, y=agg_economic[[2]] / 10^9, fill=EVTYPE)) +
+    geom_bar(colour="black", stat="identity") +
+    guides(fill=FALSE) +
+    xlab("Event type") +
+    ylab("Property and crop damage in billion $")
+```
+
+![](README_files/figure-html/unnamed-chunk-8-1.png) 
+
+## Conclusion
+1) We conclude that tornado is the most harmful events to population health.
+2) We conclude that flood has the greatest economic consequences.
+
+.
