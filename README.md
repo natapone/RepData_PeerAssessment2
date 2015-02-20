@@ -7,9 +7,9 @@ We analyse storms and weather events from U.S. National Oceanic and Atmospheric 
 ## Questions
 Your data analysis must address the following questions:
 
-1) Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
 
-2) Across the United States, which types of events have the greatest economic consequences?
+2. Across the United States, which types of events have the greatest economic consequences?
 
 ## Data Processing
 How the data were loaded into R and processed for analysis.
@@ -149,7 +149,8 @@ ggplot(data=agg_economic,
 ![](README_files/figure-html/unnamed-chunk-8-1.png) 
 
 ## Conclusion
-1) We conclude that tornado is the most harmful events to population health.
-2) We conclude that flood has the greatest economic consequences.
+1. We conclude that tornado is the most harmful events to population health.
+
+2. We conclude that flood has the greatest economic consequences.
 
 .
