@@ -7,9 +7,7 @@ require(data.table)
 
 read_raw <- function () {
     file_path = "data/repdata-data-StormData.csv";
-    data = read.csv(file_path,sep = ",")
-
-    
+    data = read.csv(file_path,sep = ",")   
 }
 
 read_tmp <- function (var) {
